@@ -18,7 +18,18 @@
 
   <div class="app">
 
-    <h1>Visiting Cards</h1>
+    <div class="topbar">
+
+      <h1>Visiting Cards</h1>
+
+      <button
+        class="addButton"
+        onclick="openAddCard()">
+        + Add Card
+      </button>
+
+    </div>
+
 
     <input
       id="searchBox"
@@ -28,9 +39,94 @@
       autocomplete="off"
     >
 
+
     <div id="results"></div>
 
   </div>
+
+
+  <!-- ADD CARD MODAL -->
+
+  <div
+    id="addCardModal"
+    class="modal">
+
+    <div class="modalContent">
+
+      <div class="modalHeader">
+
+        <h2>Add Visiting Card</h2>
+
+        <button
+          class="closeButton"
+          onclick="closeAddCard()">
+          ×
+        </button>
+
+      </div>
+
+
+      <!-- PHOTO -->
+
+      <label class="photoLabel">
+        Visiting Card Photo
+      </label>
+
+      <input
+        id="imageFile"
+        type="file"
+        accept="image/png"
+      >
+
+
+      <input
+        id="name"
+        placeholder="Name"
+      >
+
+      <input
+        id="company"
+        placeholder="Company"
+      >
+
+      <input
+        id="designation"
+        placeholder="Designation"
+      >
+
+      <input
+        id="area"
+        placeholder="Area"
+      >
+
+      <input
+        id="mobile"
+        placeholder="Mobile"
+      >
+
+      <input
+        id="email"
+        placeholder="Email"
+      >
+
+      <textarea
+        id="notes"
+        placeholder="Notes"></textarea>
+
+
+      <button
+        id="saveButton"
+        class="saveButton"
+        onclick="saveCard()">
+
+        Save Card
+
+      </button>
+
+    </div>
+
+  </div>
+
 
   <?!= include('JavaScript'); ?>
 
