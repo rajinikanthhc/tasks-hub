@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <title>Visiting Cards Hub</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f6f8;
+    }
+
+    .app {
+      max-width: 900px;
+      margin: auto;
+      padding: 30px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    #searchBox {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 16px 20px;
+      font-size: 18px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      outline: none;
+    }
+
+    #results {
+      margin-top: 25px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+      display: block;
+    }
+
+    .details {
+      padding: 12px 5px 5px;
+    }
+
+    .name {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .company {
+      margin-top: 5px;
+      font-size: 16px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <h1>Visiting Cards</h1>
+
+  <input
+    id="searchBox"
+    type="text"
+    placeholder="Search anything..."
+    oninput="searchCards()"
+  >
+
+  <div id="results"></div>
+
+</div>
+
+<script>
+
+function searchCards() {
+
+  const text = document
+    .getElementById("searchBox")
+    .value;
+
+  google.script.run
+    .withSuccessHandler(displayCards)
+    .searchCards(text);
+}
+
+
+function displayCards(cards) {
+
+  const results =
+    document.getElementById("results");
+
+  results.innerHTML = "";
+
+  if (!cards.length) {
+
+    results.innerHTML =
+      '<div class="empty">No visiting cards found</div>';
+
+    return;
+  }
+
+  cards.forEach(card => {
+
+    const div = document.createElement("div");
+
+    div.className = "card";
+
+    div.innerHTML = `
+
+      ${
+        card.Image
+        ? `<img src="${card.Image}" alt="Visiting Card">`
+        : ""
+      }
+
+      <div class="details">
+
+        <div class="name">
+          ${card.Name || ""}
+        </div>
+
+        <div class="company">
+          ${card.Company || ""}
+        </div>
+
+        <div>
+          ${card.Designation || ""}
+        </div>
+
+      </div>
+
+    `;
+
+    results.appendChild(div);
+
+  });
+
+}
+
+
+// Load all cards when app opens
+searchCards();
+
+</script>
+
+</body>
+</html>
