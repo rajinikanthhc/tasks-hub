@@ -1,12 +1,20 @@
 const SHEET_NAME = "Cards";
 
 function doGet() {
-  return HtmlService.createHtmlOutputFromFile("Index")
+  return HtmlService.createTemplateFromFile("Index")
+    .evaluate()
     .setTitle("Visiting Cards Hub");
 }
 
+function include(filename) {
+  return HtmlService
+    .createHtmlOutputFromFile(filename)
+    .getContent();
+}
+
 function getCards() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet()
+  const sheet = SpreadsheetApp
+    .getActiveSpreadsheet()
     .getSheetByName(SHEET_NAME);
 
   const data = sheet.getDataRange().getValues();
@@ -20,6 +28,7 @@ function getCards() {
   return data.slice(1)
     .filter(row => row.some(cell => cell !== ""))
     .map(row => {
+
       const card = {};
 
       headers.forEach((header, index) => {
@@ -27,21 +36,6 @@ function getCards() {
       });
 
       return card;
+
     });
-}
-
-function searchCards(searchText) {
-  const cards = getCards();
-
-  if (!searchText || !searchText.trim()) {
-    return cards;
-  }
-
-  const search = searchText.toLowerCase().trim();
-
-  return cards.filter(card => {
-    return Object.values(card).some(value =>
-      String(value).toLowerCase().includes(search)
-    );
-  });
 }
