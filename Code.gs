@@ -76,8 +76,8 @@ function addCard(card, imageData) {
       .getActiveSpreadsheet()
       .getSheetByName(SHEET_NAME);
 
-
-    const newId = getSmallestAvailableId(sheet);
+    const newId =
+      getSmallestAvailableId(sheet);
 
 
     /* -----------------------------
@@ -86,13 +86,13 @@ function addCard(card, imageData) {
 
     let imageName = "";
 
-
     if (imageData && imageData.base64) {
 
       imageName =
         createImageName(
           card.Name,
-          card.Company
+          card.Company,
+          imageData.mimeType
         );
 
       uploadToGitHub(
@@ -257,7 +257,7 @@ function updateCard(card, imageData) {
 
 
   /* -----------------------------
-     UPLOAD NEW IMAGE IF SELECTED
+     UPLOAD NEW IMAGE
   ----------------------------- */
 
   if (imageData && imageData.base64) {
@@ -265,7 +265,8 @@ function updateCard(card, imageData) {
     imageName =
       createImageName(
         card.Name,
-        card.Company
+        card.Company,
+        imageData.mimeType
       );
 
 
@@ -302,9 +303,10 @@ function updateCard(card, imageData) {
 
 /* =================================
    CREATE IMAGE NAME
+   KEEP ORIGINAL IMAGE FORMAT
 ================================= */
 
-function createImageName(name, company) {
+function createImageName(name, company, mimeType) {
 
   let filename =
     (name || "Unknown") +
@@ -318,7 +320,43 @@ function createImageName(name, company) {
     .trim();
 
 
-  return filename + ".png";
+  const extension =
+    getExtensionFromMimeType(mimeType);
+
+
+  return filename + extension;
+
+}
+
+
+/* =================================
+   GET FILE EXTENSION
+================================= */
+
+function getExtensionFromMimeType(mimeType) {
+
+  const types = {
+
+    "image/jpeg": ".jpg",
+
+    "image/jpg": ".jpg",
+
+    "image/png": ".png",
+
+    "image/webp": ".webp",
+
+    "image/gif": ".gif",
+
+    "image/bmp": ".bmp",
+
+    "image/tiff": ".tiff",
+
+    "image/svg+xml": ".svg"
+
+  };
+
+
+  return types[mimeType] || ".jpg";
 
 }
 

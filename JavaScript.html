@@ -240,7 +240,7 @@ function saveCard() {
   if (!file) {
 
     alert(
-      "Please select a visiting card PNG image."
+      "Please select a visiting card image."
     );
 
     return;
@@ -329,7 +329,8 @@ function uploadAndAddCard(card, file) {
         card,
 
         {
-          base64: base64Data
+          base64: base64Data,
+          mimeType: file.type
         }
 
       );
@@ -423,7 +424,8 @@ function updateExistingCard(card, file) {
       card,
 
       {
-        base64: base64Data
+        base64: base64Data,
+        mimeType: file.type
       }
 
     );

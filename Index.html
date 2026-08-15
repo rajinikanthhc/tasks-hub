@@ -31,6 +31,8 @@
     </div>
 
 
+    <!-- SEARCH -->
+
     <input
       id="searchBox"
       type="text"
@@ -40,18 +42,25 @@
     >
 
 
+    <!-- RESULTS -->
+
     <div id="results"></div>
 
   </div>
 
 
-  <!-- ADD / EDIT CARD MODAL -->
+  <!-- =================================
+       ADD / EDIT CARD MODAL
+  ================================= -->
 
   <div
     id="addCardModal"
     class="modal">
 
     <div class="modalContent">
+
+
+      <!-- MODAL HEADER -->
 
       <div class="modalHeader">
 
@@ -62,34 +71,50 @@
         <button
           class="closeButton"
           onclick="closeAddCard()">
+
           ×
+
         </button>
 
       </div>
 
 
-      <!-- ID - ONLY SHOWN WHILE EDITING -->
+      <!-- =================================
+           ID
+           Hidden - Used During Edit
+      ================================= -->
 
       <input
         id="cardId"
+        type="text"
         placeholder="ID"
         readonly
         style="display:none;"
       >
 
 
-      <!-- PHOTO -->
+      <!-- =================================
+           PHOTO
+           ACCEPT ANY IMAGE
+      ================================= -->
 
-      <label class="photoLabel">
+      <label
+        class="photoLabel"
+        for="imageFile">
+
         Visiting Card Photo
+
       </label>
+
 
       <input
         id="imageFile"
         type="file"
-        accept="image/png"
+        accept="image/*"
       >
 
+
+      <!-- CURRENT IMAGE WHILE EDITING -->
 
       <div
         id="currentImage"
@@ -97,40 +122,85 @@
       </div>
 
 
+      <!-- =================================
+           NAME
+      ================================= -->
+
       <input
         id="name"
+        type="text"
         placeholder="Name"
       >
 
+
+      <!-- =================================
+           COMPANY
+      ================================= -->
+
       <input
         id="company"
+        type="text"
         placeholder="Company"
       >
 
+
+      <!-- =================================
+           DESIGNATION
+      ================================= -->
+
       <input
         id="designation"
+        type="text"
         placeholder="Designation"
       >
 
+
+      <!-- =================================
+           AREA
+      ================================= -->
+
       <input
         id="area"
+        type="text"
         placeholder="Area"
       >
 
+
+      <!-- =================================
+           MOBILE
+      ================================= -->
+
       <input
         id="mobile"
+        type="text"
         placeholder="Mobile"
       >
 
+
+      <!-- =================================
+           EMAIL
+      ================================= -->
+
       <input
         id="email"
+        type="email"
         placeholder="Email"
       >
 
+
+      <!-- =================================
+           NOTES
+      ================================= -->
+
       <textarea
         id="notes"
-        placeholder="Notes"></textarea>
+        placeholder="Notes">
+      </textarea>
 
+
+      <!-- =================================
+           SAVE / UPDATE
+      ================================= -->
 
       <button
         id="saveButton"
@@ -141,12 +211,18 @@
 
       </button>
 
+
     </div>
 
   </div>
 
 
+  <!-- =================================
+       JAVASCRIPT
+  ================================= -->
+
   <?!= include('JavaScript'); ?>
+
 
 </body>
 
