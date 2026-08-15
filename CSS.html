@@ -6,6 +6,11 @@ body {
   background: #f5f6f8;
 }
 
+
+/* =================================
+   APP
+================================= */
+
 .app {
   max-width: 900px;
   margin: auto;
@@ -43,6 +48,10 @@ body {
   outline: none;
 }
 
+#searchBox:focus {
+  border-color: #888;
+}
+
 
 /* =================================
    RESULTS
@@ -54,12 +63,23 @@ body {
   gap: 20px;
 }
 
+
+/* =================================
+   CARD
+================================= */
+
 .card {
+  position: relative;
   background: white;
   border-radius: 12px;
   padding: 10px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
 }
+
+
+/* =================================
+   CARD IMAGE
+================================= */
 
 .card img {
   width: 100%;
@@ -67,6 +87,52 @@ body {
   display: block;
   border-radius: 8px;
 }
+
+
+/* =================================
+   EDIT PENCIL
+================================= */
+
+.editButton {
+  position: absolute;
+
+  top: 16px;
+  right: 16px;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.92);
+
+  color: #111;
+
+  font-size: 18px;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+  z-index: 2;
+}
+
+.editButton:hover {
+  background: white;
+  transform: scale(1.05);
+}
+
+
+/* =================================
+   EMPTY MESSAGE
+================================= */
 
 .empty {
   text-align: center;
@@ -81,11 +147,16 @@ body {
 
 .addButton {
   border: none;
+
   background: #111;
   color: white;
+
   padding: 10px 16px;
+
   border-radius: 8px;
+
   cursor: pointer;
+
   font-size: 14px;
 }
 
@@ -100,27 +171,55 @@ body {
 
 .modal {
   display: none;
+
   position: fixed;
+
   inset: 0;
+
   background: rgba(0, 0, 0, 0.45);
+
   align-items: center;
   justify-content: center;
+
   padding: 20px;
+
+  z-index: 1000;
 }
+
+
+/* =================================
+   MODAL CONTENT
+================================= */
 
 .modalContent {
   background: white;
+
   width: 100%;
   max-width: 500px;
+
+  max-height: 90vh;
+
+  overflow-y: auto;
+
   border-radius: 15px;
+
   padding: 25px;
+
   box-sizing: border-box;
 }
 
+
+/* =================================
+   MODAL HEADER
+================================= */
+
 .modalHeader {
   display: flex;
+
   justify-content: space-between;
+
   align-items: center;
+
   margin-bottom: 20px;
 }
 
@@ -128,11 +227,27 @@ body {
   margin: 0;
 }
 
+
+/* =================================
+   CLOSE BUTTON
+================================= */
+
 .closeButton {
   border: none;
+
   background: none;
+
   font-size: 28px;
+
   cursor: pointer;
+
+  line-height: 1;
+
+  color: #333;
+}
+
+.closeButton:hover {
+  color: #000;
 }
 
 
@@ -143,37 +258,185 @@ body {
 .modalContent input,
 .modalContent textarea {
   width: 100%;
+
   box-sizing: border-box;
+
   padding: 12px;
+
   margin-bottom: 12px;
+
   border: 1px solid #ccc;
+
   border-radius: 8px;
+
   font-size: 15px;
+
+  font-family: Arial, sans-serif;
+
+  outline: none;
 }
+
+.modalContent input:focus,
+.modalContent textarea:focus {
+  border-color: #888;
+}
+
 
 .modalContent textarea {
   min-height: 80px;
+
   resize: vertical;
 }
 
 
 /* =================================
-   SAVE BUTTON
+   PHOTO LABEL
+================================= */
+
+.photoLabel {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 14px;
+
+  font-weight: bold;
+
+  color: #333;
+}
+
+
+/* =================================
+   CURRENT IMAGE
+================================= */
+
+.currentImage {
+  margin-bottom: 12px;
+}
+
+.currentImageText {
+  font-size: 13px;
+
+  color: #777;
+
+  margin-bottom: 6px;
+}
+
+.currentImage img {
+  width: 100%;
+
+  max-height: 200px;
+
+  object-fit: contain;
+
+  border-radius: 8px;
+
+  margin-bottom: 10px;
+}
+
+
+/* =================================
+   SAVE / UPDATE BUTTON
 ================================= */
 
 .saveButton {
   width: 100%;
+
   padding: 13px;
+
   border: none;
+
   border-radius: 8px;
+
   background: #111;
+
   color: white;
+
   font-size: 16px;
+
   cursor: pointer;
 }
 
 .saveButton:hover {
   opacity: 0.85;
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+
+/* =================================
+   MOBILE
+================================= */
+
+@media (max-width: 600px) {
+
+  .app {
+    padding: 20px 12px;
+  }
+
+
+  .topbar {
+    margin-bottom: 15px;
+  }
+
+
+  .topbar h1 {
+    font-size: 22px;
+  }
+
+
+  .addButton {
+    padding: 9px 12px;
+
+    font-size: 13px;
+  }
+
+
+  #searchBox {
+    padding: 14px 16px;
+
+    font-size: 16px;
+  }
+
+
+  #results {
+    margin-top: 18px;
+
+    gap: 15px;
+  }
+
+
+  .card {
+    padding: 7px;
+  }
+
+
+  .editButton {
+    top: 12px;
+    right: 12px;
+
+    width: 30px;
+    height: 30px;
+
+    font-size: 17px;
+  }
+
+
+  .modal {
+    padding: 12px;
+  }
+
+
+  .modalContent {
+    padding: 20px;
+
+    max-height: 92vh;
+  }
+
 }
 
 </style>

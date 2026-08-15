@@ -2,12 +2,27 @@
 
 let allCards = [];
 
+let editingCardId = null;
+
 
 /* =================================
    OPEN ADD CARD
 ================================= */
 
 function openAddCard() {
+
+  editingCardId = null;
+
+  document.getElementById("modalTitle").textContent =
+    "Add Visiting Card";
+
+  document.getElementById("saveButton").textContent =
+    "Save Card";
+
+  document.getElementById("cardId").style.display =
+    "none";
+
+  clearAddCardForm();
 
   document
     .getElementById("addCardModal")
@@ -17,7 +32,123 @@ function openAddCard() {
 
 
 /* =================================
-   CLOSE ADD CARD
+   OPEN EDIT CARD
+================================= */
+
+function editCard(id) {
+
+  const card =
+    allCards.find(item =>
+      String(item.ID) === String(id)
+    );
+
+
+  if (!card) {
+
+    alert("Card not found.");
+
+    return;
+
+  }
+
+
+  editingCardId = card.ID;
+
+
+  document.getElementById("modalTitle").textContent =
+    "Edit Visiting Card";
+
+
+  document.getElementById("saveButton").textContent =
+    "Update Card";
+
+
+  document.getElementById("cardId").style.display =
+    "none";
+
+
+  document.getElementById("cardId").value =
+    card.ID || "";
+
+
+  document.getElementById("name").value =
+    card.Name || "";
+
+
+  document.getElementById("company").value =
+    card.Company || "";
+
+
+  document.getElementById("designation").value =
+    card.Designation || "";
+
+
+  document.getElementById("area").value =
+    card.Area || "";
+
+
+  document.getElementById("mobile").value =
+    card.Mobile || "";
+
+
+  document.getElementById("email").value =
+    card.Email || "";
+
+
+  document.getElementById("notes").value =
+    card.Notes || "";
+
+
+  document.getElementById("imageFile").value =
+    "";
+
+
+  /* -----------------------------
+     SHOW CURRENT IMAGE
+  ----------------------------- */
+
+  const currentImage =
+    document.getElementById("currentImage");
+
+
+  if (card.Image) {
+
+    const imageUrl =
+      "https://raw.githubusercontent.com/rajinikanthhc/images/main/visiting-cards/"
+      + encodeURIComponent(card.Image.trim());
+
+
+    currentImage.innerHTML = `
+
+      <div class="currentImageText">
+        Current photo
+      </div>
+
+      <img
+        src="${imageUrl}"
+        alt="Current Visiting Card"
+      >
+
+    `;
+
+  }
+
+  else {
+
+    currentImage.innerHTML = "";
+
+  }
+
+
+  document
+    .getElementById("addCardModal")
+    .style.display = "flex";
+
+}
+
+
+/* =================================
+   CLOSE ADD / EDIT CARD
 ================================= */
 
 function closeAddCard() {
@@ -30,7 +161,7 @@ function closeAddCard() {
 
 
 /* =================================
-   SAVE CARD
+   SAVE / UPDATE CARD
 ================================= */
 
 function saveCard() {
@@ -42,16 +173,10 @@ function saveCard() {
     fileInput.files[0];
 
 
-  if (!file) {
-
-    alert("Please select a visiting card PNG image.");
-
-    return;
-
-  }
-
-
   const card = {
+
+    ID:
+      document.getElementById("cardId").value.trim(),
 
     Name:
       document.getElementById("name").value.trim(),
@@ -77,17 +202,69 @@ function saveCard() {
   };
 
 
+  /* -----------------------------
+     VALIDATION
+  ----------------------------- */
+
   if (!card.Name && !card.Company) {
 
-    alert("Please enter Name or Company.");
+    alert(
+      "Please enter Name or Company."
+    );
 
     return;
 
   }
 
 
+  /* -----------------------------
+     EDIT EXISTING CARD
+  ----------------------------- */
+
+  if (editingCardId) {
+
+    updateExistingCard(
+      card,
+      file
+    );
+
+    return;
+
+  }
+
+
+  /* -----------------------------
+     ADD NEW CARD
+  ----------------------------- */
+
+  if (!file) {
+
+    alert(
+      "Please select a visiting card PNG image."
+    );
+
+    return;
+
+  }
+
+
+  uploadAndAddCard(
+    card,
+    file
+  );
+
+}
+
+
+/* =================================
+   ADD NEW CARD
+================================= */
+
+function uploadAndAddCard(card, file) {
+
   const saveButton =
     document.getElementById("saveButton");
+
 
   saveButton.disabled = true;
 
@@ -122,12 +299,14 @@ function saveCard() {
 
         loadCards();
 
+
         saveButton.disabled = false;
 
         saveButton.textContent =
           "Save Card";
 
       })
+
 
       .withFailureHandler(function(error) {
 
@@ -136,12 +315,14 @@ function saveCard() {
           error.message
         );
 
+
         saveButton.disabled = false;
 
         saveButton.textContent =
           "Save Card";
 
       })
+
 
       .addCard(
 
@@ -158,7 +339,10 @@ function saveCard() {
 
   reader.onerror = function() {
 
-    alert("Unable to read the selected image.");
+    alert(
+      "Unable to read the selected image."
+    );
+
 
     saveButton.disabled = false;
 
@@ -174,26 +358,201 @@ function saveCard() {
 
 
 /* =================================
-   CLEAR ADD CARD FORM
+   UPDATE EXISTING CARD
+================================= */
+
+function updateExistingCard(card, file) {
+
+  const saveButton =
+    document.getElementById("saveButton");
+
+
+  saveButton.disabled = true;
+
+  saveButton.textContent =
+    "Updating...";
+
+
+  /* -----------------------------
+     NO NEW IMAGE
+  ----------------------------- */
+
+  if (!file) {
+
+    const existingCard =
+      allCards.find(item =>
+        String(item.ID) ===
+        String(card.ID)
+      );
+
+
+    card.Image =
+      existingCard
+        ? existingCard.Image
+        : "";
+
+
+    sendCardUpdate(
+      card,
+      null
+    );
+
+
+    return;
+
+  }
+
+
+  /* -----------------------------
+     NEW IMAGE SELECTED
+  ----------------------------- */
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload = function(event) {
+
+    const base64Data =
+      event.target.result
+        .split(",")[1];
+
+
+    sendCardUpdate(
+
+      card,
+
+      {
+        base64: base64Data
+      }
+
+    );
+
+  };
+
+
+  reader.onerror = function() {
+
+    alert(
+      "Unable to read the selected image."
+    );
+
+
+    saveButton.disabled = false;
+
+    saveButton.textContent =
+      "Update Card";
+
+  };
+
+
+  reader.readAsDataURL(file);
+
+}
+
+
+/* =================================
+   SEND UPDATE TO APPS SCRIPT
+================================= */
+
+function sendCardUpdate(
+  card,
+  imageData
+) {
+
+  google.script.run
+
+    .withSuccessHandler(function(updatedId) {
+
+      alert(
+        "Card updated successfully: " +
+        updatedId
+      );
+
+
+      closeAddCard();
+
+      clearAddCardForm();
+
+      loadCards();
+
+
+      const saveButton =
+        document.getElementById("saveButton");
+
+
+      saveButton.disabled = false;
+
+      saveButton.textContent =
+        "Save Card";
+
+    })
+
+
+    .withFailureHandler(function(error) {
+
+      alert(
+        "Error: " +
+        error.message
+      );
+
+
+      const saveButton =
+        document.getElementById("saveButton");
+
+
+      saveButton.disabled = false;
+
+      saveButton.textContent =
+        "Update Card";
+
+    })
+
+
+    .updateCard(
+      card,
+      imageData
+    );
+
+}
+
+
+/* =================================
+   CLEAR FORM
 ================================= */
 
 function clearAddCardForm() {
 
-  document.getElementById("name").value = "";
+  document.getElementById("cardId").value =
+    "";
 
-  document.getElementById("company").value = "";
+  document.getElementById("name").value =
+    "";
 
-  document.getElementById("designation").value = "";
+  document.getElementById("company").value =
+    "";
 
-  document.getElementById("area").value = "";
+  document.getElementById("designation").value =
+    "";
 
-  document.getElementById("mobile").value = "";
+  document.getElementById("area").value =
+    "";
 
-  document.getElementById("email").value = "";
+  document.getElementById("mobile").value =
+    "";
 
-  document.getElementById("notes").value = "";
+  document.getElementById("email").value =
+    "";
 
-  document.getElementById("imageFile").value = "";
+  document.getElementById("notes").value =
+    "";
+
+  document.getElementById("imageFile").value =
+    "";
+
+
+  document.getElementById("currentImage").innerHTML =
+    "";
 
 }
 
@@ -259,9 +618,11 @@ function searchCards() {
       return Object
         .values(card)
         .some(value =>
+
           String(value)
             .toLowerCase()
             .includes(text)
+
         );
 
     });
@@ -303,7 +664,9 @@ function displayCards(cards) {
     const div =
       document.createElement("div");
 
-    div.className = "card";
+
+    div.className =
+      "card";
 
 
     const imageName =
@@ -321,6 +684,15 @@ function displayCards(cards) {
         src="${imageUrl}"
         alt="Visiting Card"
       >
+
+      <button
+        class="editButton"
+        onclick="editCard('${String(card.ID).replace(/'/g, "\\'")}')"
+        title="Edit card">
+
+        ✎
+
+      </button>
 
     `;
 

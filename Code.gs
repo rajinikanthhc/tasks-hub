@@ -60,59 +60,205 @@ function getCards() {
 
 
 /* =================================
-   ADD CARD + UPLOAD IMAGE
+   ADD NEW CARD
+   USE SMALLEST AVAILABLE ID
 ================================= */
 
 function addCard(card, imageData) {
+
+  const lock = LockService.getScriptLock();
+
+  lock.waitLock(30000);
+
+  try {
+
+    const sheet = SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
+
+
+    const newId = getSmallestAvailableId(sheet);
+
+
+    /* -----------------------------
+       UPLOAD IMAGE
+    ----------------------------- */
+
+    let imageName = "";
+
+
+    if (imageData && imageData.base64) {
+
+      imageName =
+        createImageName(
+          card.Name,
+          card.Company
+        );
+
+      uploadToGitHub(
+        imageName,
+        imageData.base64
+      );
+
+    }
+
+
+    /* -----------------------------
+       SAVE TO SHEET
+    ----------------------------- */
+
+    sheet.appendRow([
+
+      newId,
+
+      card.Name || "",
+
+      card.Company || "",
+
+      card.Designation || "",
+
+      card.Area || "",
+
+      card.Mobile || "",
+
+      card.Email || "",
+
+      imageName,
+
+      card.Notes || ""
+
+    ]);
+
+
+    return newId;
+
+  }
+
+  finally {
+
+    lock.releaseLock();
+
+  }
+
+}
+
+
+/* =================================
+   FIND SMALLEST AVAILABLE ID
+================================= */
+
+function getSmallestAvailableId(sheet) {
+
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= 1) {
+
+    return "VC0001";
+
+  }
+
+
+  const ids = sheet
+    .getRange(2, 1, lastRow - 1, 1)
+    .getValues()
+    .flat();
+
+
+  const usedNumbers = new Set();
+
+
+  ids.forEach(id => {
+
+    const match =
+      String(id).match(/^VC(\d+)$/i);
+
+    if (match) {
+
+      usedNumbers.add(
+        Number(match[1])
+      );
+
+    }
+
+  });
+
+
+  let number = 1;
+
+
+  while (usedNumbers.has(number)) {
+
+    number++;
+
+  }
+
+
+  return "VC" +
+    String(number).padStart(4, "0");
+
+}
+
+
+/* =================================
+   EDIT CARD
+================================= */
+
+function updateCard(card, imageData) {
 
   const sheet = SpreadsheetApp
     .getActiveSpreadsheet()
     .getSheetByName(SHEET_NAME);
 
 
-  /* -----------------------------
-     GENERATE ID
-  ----------------------------- */
+  const data =
+    sheet.getDataRange().getValues();
 
-  const lastRow = sheet.getLastRow();
 
-  let nextNumber = 1;
+  const headers =
+    data[0];
 
-  if (lastRow > 1) {
 
-    const ids = sheet
-      .getRange(2, 1, lastRow - 1, 1)
-      .getValues()
-      .flat();
+  const idColumn =
+    headers.indexOf("ID");
 
-    const numbers = ids
-      .map(id => {
 
-        const match =
-          String(id).match(/VC(\d+)/i);
+  const rowIndex =
+    data.findIndex((row, index) => {
 
-        return match
-          ? Number(match[1])
-          : 0;
+      if (index === 0) {
+        return false;
+      }
 
-      });
+      return String(row[idColumn]) ===
+        String(card.ID);
 
-    nextNumber =
-      Math.max(...numbers) + 1;
+    });
+
+
+  if (rowIndex === -1) {
+
+    throw new Error(
+      "Card not found: " + card.ID
+    );
 
   }
 
 
-  const newId =
-    "VC" + String(nextNumber).padStart(4, "0");
+  const sheetRow =
+    rowIndex + 1;
 
 
   /* -----------------------------
-     UPLOAD IMAGE
+     KEEP EXISTING IMAGE
   ----------------------------- */
 
-  let imageName = "";
+  let imageName =
+    card.Image || "";
 
+
+  /* -----------------------------
+     UPLOAD NEW IMAGE IF SELECTED
+  ----------------------------- */
 
   if (imageData && imageData.base64) {
 
@@ -121,6 +267,7 @@ function addCard(card, imageData) {
         card.Name,
         card.Company
       );
+
 
     uploadToGitHub(
       imageName,
@@ -131,33 +278,24 @@ function addCard(card, imageData) {
 
 
   /* -----------------------------
-     SAVE TO SHEET
+     UPDATE ROW
   ----------------------------- */
 
-  sheet.appendRow([
-
-    newId,
-
-    card.Name || "",
-
-    card.Company || "",
-
-    card.Designation || "",
-
-    card.Area || "",
-
-    card.Mobile || "",
-
-    card.Email || "",
-
-    imageName,
-
-    card.Notes || ""
-
-  ]);
+  sheet.getRange(sheetRow, 1, 1, 9)
+    .setValues([[
+      card.ID || "",
+      card.Name || "",
+      card.Company || "",
+      card.Designation || "",
+      card.Area || "",
+      card.Mobile || "",
+      card.Email || "",
+      imageName,
+      card.Notes || ""
+    ]]);
 
 
-  return newId;
+  return card.ID;
 
 }
 
@@ -274,30 +412,5 @@ function uploadToGitHub(filename, base64Data) {
     );
 
   }
-
-}
-function authorizeGitHub() {
-
-  const token =
-    PropertiesService
-      .getScriptProperties()
-      .getProperty("GITHUB_TOKEN");
-
-  const response =
-    UrlFetchApp.fetch("https://api.github.com/user", {
-
-      method: "get",
-
-      headers: {
-        Authorization: "Bearer " + token,
-        Accept: "application/vnd.github+json"
-      },
-
-      muteHttpExceptions: true
-
-    });
-
-  Logger.log(response.getResponseCode());
-  Logger.log(response.getContentText());
 
 }

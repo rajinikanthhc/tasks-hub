@@ -45,7 +45,7 @@
   </div>
 
 
-  <!-- ADD CARD MODAL -->
+  <!-- ADD / EDIT CARD MODAL -->
 
   <div
     id="addCardModal"
@@ -55,7 +55,9 @@
 
       <div class="modalHeader">
 
-        <h2>Add Visiting Card</h2>
+        <h2 id="modalTitle">
+          Add Visiting Card
+        </h2>
 
         <button
           class="closeButton"
@@ -64,6 +66,16 @@
         </button>
 
       </div>
+
+
+      <!-- ID - ONLY SHOWN WHILE EDITING -->
+
+      <input
+        id="cardId"
+        placeholder="ID"
+        readonly
+        style="display:none;"
+      >
 
 
       <!-- PHOTO -->
@@ -77,6 +89,12 @@
         type="file"
         accept="image/png"
       >
+
+
+      <div
+        id="currentImage"
+        class="currentImage">
+      </div>
 
 
       <input
