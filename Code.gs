@@ -1,19 +1,26 @@
-const SHEET_NAME = "Cards";
+const SHEET_NAME = "Tasks";
 
-const GITHUB_OWNER = "rajinikanthhc";
-const GITHUB_REPO = "images";
-const GITHUB_FOLDER = "visiting-cards";
 
+/* ================================
+   OPEN WEB APP
+================================ */
 
 function doGet() {
 
   return HtmlService
     .createTemplateFromFile("Index")
     .evaluate()
-    .setTitle("Visiting Cards Hub");
+    .setTitle("Tasks Hub")
+    .setXFrameOptionsMode(
+      HtmlService.XFrameOptionsMode.ALLOWALL
+    );
 
 }
 
+
+/* ================================
+   INCLUDE HTML FILES
+================================ */
 
 function include(filename) {
 
@@ -24,431 +31,360 @@ function include(filename) {
 }
 
 
-/* =================================
-   GET ALL CARDS
-================================= */
+/* ================================
+   GET TASKS
+================================ */
 
-function getCards() {
+function getTasks() {
 
-  const sheet = SpreadsheetApp
-    .getActiveSpreadsheet()
-    .getSheetByName(SHEET_NAME);
-
-  const data = sheet.getDataRange().getValues();
-
-  if (data.length <= 1) {
-    return [];
-  }
-
-  const headers = data[0];
-
-  return data.slice(1)
-    .filter(row => row.some(cell => cell !== ""))
-    .map(row => {
-
-      const card = {};
-
-      headers.forEach((header, index) => {
-        card[header] = row[index] || "";
-      });
-
-      return card;
-
-    });
-
-}
-
-
-/* =================================
-   ADD NEW CARD
-   USE SMALLEST AVAILABLE ID
-================================= */
-
-function addCard(card, imageData) {
-
-  const lock = LockService.getScriptLock();
-
-  lock.waitLock(30000);
-
-  try {
-
-    const sheet = SpreadsheetApp
+  const sheet =
+    SpreadsheetApp
       .getActiveSpreadsheet()
       .getSheetByName(SHEET_NAME);
 
-    const newId =
-      getSmallestAvailableId(sheet);
+  if (!sheet) {
 
-
-    /* -----------------------------
-       UPLOAD IMAGE
-    ----------------------------- */
-
-    let imageName = "";
-
-    if (imageData && imageData.base64) {
-
-      imageName =
-        createImageName(
-          card.Name,
-          card.Company,
-          imageData.mimeType
-        );
-
-      uploadToGitHub(
-        imageName,
-        imageData.base64
-      );
-
-    }
-
-
-    /* -----------------------------
-       SAVE TO SHEET
-    ----------------------------- */
-
-    sheet.appendRow([
-
-      newId,
-
-      card.Name || "",
-
-      card.Company || "",
-
-      card.Designation || "",
-
-      card.Area || "",
-
-      card.Mobile || "",
-
-      card.Email || "",
-
-      imageName,
-
-      card.Notes || ""
-
-    ]);
-
-
-    return newId;
-
-  }
-
-  finally {
-
-    lock.releaseLock();
-
-  }
-
-}
-
-
-/* =================================
-   FIND SMALLEST AVAILABLE ID
-================================= */
-
-function getSmallestAvailableId(sheet) {
-
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow <= 1) {
-
-    return "VC0001";
+    throw new Error("Tasks sheet not found.");
 
   }
 
 
-  const ids = sheet
-    .getRange(2, 1, lastRow - 1, 1)
-    .getValues()
-    .flat();
+  const lastRow =
+    sheet.getLastRow();
 
 
-  const usedNumbers = new Set();
+  if (lastRow < 2) {
 
-
-  ids.forEach(id => {
-
-    const match =
-      String(id).match(/^VC(\d+)$/i);
-
-    if (match) {
-
-      usedNumbers.add(
-        Number(match[1])
-      );
-
-    }
-
-  });
-
-
-  let number = 1;
-
-
-  while (usedNumbers.has(number)) {
-
-    number++;
+    return [];
 
   }
-
-
-  return "VC" +
-    String(number).padStart(4, "0");
-
-}
-
-
-/* =================================
-   EDIT CARD
-================================= */
-
-function updateCard(card, imageData) {
-
-  const sheet = SpreadsheetApp
-    .getActiveSpreadsheet()
-    .getSheetByName(SHEET_NAME);
 
 
   const data =
-    sheet.getDataRange().getValues();
+    sheet
+      .getRange(2, 1, lastRow - 1, 4)
+      .getValues();
 
 
-  const headers =
-    data[0];
+  return data
 
+    .filter(function (row) {
 
-  const idColumn =
-    headers.indexOf("ID");
+      return row[1] !== "";
 
+    })
 
-  const rowIndex =
-    data.findIndex((row, index) => {
+    .map(function (row) {
 
-      if (index === 0) {
-        return false;
-      }
+      return {
 
-      return String(row[idColumn]) ===
-        String(card.ID);
+        id: row[0],
+
+        task: row[1],
+
+        dueDate: row[2]
+          ? Utilities.formatDate(
+              new Date(row[2]),
+              Session.getScriptTimeZone(),
+              "yyyy-MM-dd"
+            )
+          : "",
+
+        status: row[3] || "Pending"
+
+      };
 
     });
 
-
-  if (rowIndex === -1) {
-
-    throw new Error(
-      "Card not found: " + card.ID
-    );
-
-  }
+}
 
 
-  const sheetRow =
-    rowIndex + 1;
+/* ================================
+   ADD TASK
+================================ */
+
+function addTask(task, dueDate) {
+
+  const sheet =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
 
 
-  /* -----------------------------
-     KEEP EXISTING IMAGE
-  ----------------------------- */
+  if (!sheet) {
 
-  let imageName =
-    card.Image || "";
-
-
-  /* -----------------------------
-     UPLOAD NEW IMAGE
-  ----------------------------- */
-
-  if (imageData && imageData.base64) {
-
-    imageName =
-      createImageName(
-        card.Name,
-        card.Company,
-        imageData.mimeType
-      );
-
-
-    uploadToGitHub(
-      imageName,
-      imageData.base64
-    );
+    throw new Error("Tasks sheet not found.");
 
   }
 
 
-  /* -----------------------------
-     UPDATE ROW
-  ----------------------------- */
+  if (!task || task.trim() === "") {
 
-  sheet.getRange(sheetRow, 1, 1, 9)
-    .setValues([[
-      card.ID || "",
-      card.Name || "",
-      card.Company || "",
-      card.Designation || "",
-      card.Area || "",
-      card.Mobile || "",
-      card.Email || "",
-      imageName,
-      card.Notes || ""
-    ]]);
+    throw new Error("Please enter a task.");
+
+  }
 
 
-  return card.ID;
+  const lastRow =
+    sheet.getLastRow();
+
+
+  let newId = 1;
+
+
+  if (lastRow >= 2) {
+
+    const ids =
+      sheet
+        .getRange(2, 1, lastRow - 1, 1)
+        .getValues()
+        .flat()
+        .filter(function (id) {
+
+          return id !== "";
+
+        });
+
+
+    if (ids.length > 0) {
+
+      newId =
+        Math.max(
+          ...ids.map(Number)
+        ) + 1;
+
+    }
+
+  }
+
+
+  sheet.appendRow([
+
+    newId,
+
+    task.trim(),
+
+    dueDate
+      ? new Date(dueDate)
+      : "",
+
+    "Pending"
+
+  ]);
+
+
+  return true;
 
 }
 
 
-/* =================================
-   CREATE IMAGE NAME
-   KEEP ORIGINAL IMAGE FORMAT
-================================= */
+/* ================================
+   UPDATE TASK
+================================ */
 
-function createImageName(name, company, mimeType) {
+function updateTask(id, task, dueDate) {
 
-  let filename =
-    (name || "Unknown") +
-    "-" +
-    (company || "Company");
-
-
-  filename = filename
-    .replace(/[\/\\:*?"<>|]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const sheet =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
 
 
-  const extension =
-    getExtensionFromMimeType(mimeType);
+  if (!sheet) {
 
-
-  return filename + extension;
-
-}
-
-
-/* =================================
-   GET FILE EXTENSION
-================================= */
-
-function getExtensionFromMimeType(mimeType) {
-
-  const types = {
-
-    "image/jpeg": ".jpg",
-
-    "image/jpg": ".jpg",
-
-    "image/png": ".png",
-
-    "image/webp": ".webp",
-
-    "image/gif": ".gif",
-
-    "image/bmp": ".bmp",
-
-    "image/tiff": ".tiff",
-
-    "image/svg+xml": ".svg"
-
-  };
-
-
-  return types[mimeType] || ".jpg";
-
-}
-
-
-/* =================================
-   UPLOAD TO GITHUB
-================================= */
-
-function uploadToGitHub(filename, base64Data) {
-
-  const token =
-    PropertiesService
-      .getScriptProperties()
-      .getProperty("GITHUB_TOKEN");
-
-
-  if (!token) {
-
-    throw new Error(
-      "GitHub token not found in Script Properties."
-    );
+    throw new Error("Tasks sheet not found.");
 
   }
 
 
-  const path =
-    GITHUB_FOLDER +
-    "/" +
-    filename;
+  if (!task || task.trim() === "") {
 
-
-  const url =
-    "https://api.github.com/repos/" +
-    GITHUB_OWNER +
-    "/" +
-    GITHUB_REPO +
-    "/contents/" +
-    encodeURIComponent(path);
-
-
-  const payload = {
-
-    message:
-      "Add visiting card - " + filename,
-
-    content:
-      base64Data,
-
-    branch:
-      "main"
-
-  };
-
-
-  const response =
-    UrlFetchApp.fetch(url, {
-
-      method: "put",
-
-      contentType:
-        "application/json",
-
-      headers: {
-
-        Authorization:
-          "Bearer " + token,
-
-        Accept:
-          "application/vnd.github+json"
-
-      },
-
-      payload:
-        JSON.stringify(payload),
-
-      muteHttpExceptions:
-        true
-
-    });
-
-
-  const code =
-    response.getResponseCode();
-
-
-  if (code < 200 || code >= 300) {
-
-    throw new Error(
-      "GitHub upload failed: " +
-      response.getContentText()
-    );
+    throw new Error("Please enter a task.");
 
   }
+
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (lastRow < 2) {
+
+    return false;
+
+  }
+
+
+  const ids =
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+
+  for (let i = 0; i < ids.length; i++) {
+
+    if (
+      String(ids[i][0]) ===
+      String(id)
+    ) {
+
+      /* Update Task */
+
+      sheet
+        .getRange(i + 2, 2)
+        .setValue(task.trim());
+
+
+      /* Update Due Date */
+
+      sheet
+        .getRange(i + 2, 3)
+        .setValue(
+          dueDate
+            ? new Date(dueDate)
+            : ""
+        );
+
+
+      return true;
+
+    }
+
+  }
+
+
+  return false;
+
+}
+
+
+/* ================================
+   COMPLETE / UNCOMPLETE TASK
+================================ */
+
+function toggleTask(id, status) {
+
+  const sheet =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
+
+
+  if (!sheet) {
+
+    throw new Error("Tasks sheet not found.");
+
+  }
+
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (lastRow < 2) {
+
+    return false;
+
+  }
+
+
+  const ids =
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+
+  for (let i = 0; i < ids.length; i++) {
+
+    if (
+      String(ids[i][0]) ===
+      String(id)
+    ) {
+
+      sheet
+        .getRange(i + 2, 4)
+        .setValue(status);
+
+
+      return true;
+
+    }
+
+  }
+
+
+  return false;
+
+}
+
+
+/* ================================
+   DELETE TASK
+================================ */
+
+function deleteTask(id) {
+
+  const sheet =
+    SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
+
+
+  if (!sheet) {
+
+    throw new Error("Tasks sheet not found.");
+
+  }
+
+
+  const lastRow =
+    sheet.getLastRow();
+
+
+  if (lastRow < 2) {
+
+    return false;
+
+  }
+
+
+  const ids =
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+
+  for (let i = 0; i < ids.length; i++) {
+
+    if (
+      String(ids[i][0]) ===
+      String(id)
+    ) {
+
+      sheet.deleteRow(i + 2);
+
+      return true;
+
+    }
+
+  }
+
+
+  return false;
 
 }

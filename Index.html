@@ -1,227 +1,199 @@
 <!DOCTYPE html>
+
 <html>
 
 <head>
 
   <base target="_top">
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1">
 
-  <title>Visiting Cards Hub</title>
+  <title>Tasks Hub</title>
 
   <?!= include('CSS'); ?>
 
 </head>
 
+
 <body>
 
-  <div class="app">
-
-    <div class="topbar">
-
-      <h1>Visiting Cards</h1>
-
-      <button
-        class="addButton"
-        onclick="openAddCard()">
-        + Add Card
-      </button>
-
-    </div>
+<div class="app">
 
 
-    <!-- SEARCH -->
+  <!-- HEADER -->
+
+  <div class="topbar">
+
+    <h1>Tasks</h1>
+
+    <button
+      class="addButton"
+      onclick="openAddTask()">
+
+      + Add Task
+
+    </button>
+
+  </div>
+
+
+  <!-- SEARCH -->
+
+  <div class="searchBox">
+
+    <span>🔍</span>
 
     <input
-      id="searchBox"
       type="text"
-      placeholder="Search anything..."
-      oninput="searchCards()"
-      autocomplete="off"
-    >
+      id="searchInput"
+      placeholder="Search tasks..."
+      oninput="filterTasks()">
 
+    <button
+      id="clearSearch"
+      onclick="clearSearch()"
+      style="display:none;">
 
-    <!-- RESULTS -->
+      ×
 
-    <div id="results"></div>
+    </button>
 
   </div>
 
 
-  <!-- =================================
-       ADD / EDIT CARD MODAL
-  ================================= -->
+  <!-- FILTER -->
 
-  <div
-    id="addCardModal"
-    class="modal">
+  <div class="filters">
 
-    <div class="modalContent">
+    <button
+      id="allButton"
+      class="filterButton active"
+      onclick="setFilter('all')">
 
+      All
 
-      <!-- MODAL HEADER -->
-
-      <div class="modalHeader">
-
-        <h2 id="modalTitle">
-          Add Visiting Card
-        </h2>
-
-        <button
-          class="closeButton"
-          onclick="closeAddCard()">
-
-          ×
-
-        </button>
-
-      </div>
+    </button>
 
 
-      <!-- =================================
-           ID
-           Hidden - Used During Edit
-      ================================= -->
+    <button
+      id="pendingButton"
+      class="filterButton"
+      onclick="setFilter('pending')">
 
-      <input
-        id="cardId"
-        type="text"
-        placeholder="ID"
-        readonly
-        style="display:none;"
-      >
+      Pending
+
+    </button>
 
 
-      <!-- =================================
-           PHOTO
-           ACCEPT ANY IMAGE
-      ================================= -->
+    <button
+      id="completedButton"
+      class="filterButton"
+      onclick="setFilter('completed')">
 
-      <label
-        class="photoLabel"
-        for="imageFile">
+      Completed
 
-        Visiting Card Photo
+    </button>
 
-      </label>
+  </div>
 
 
-      <input
-        id="imageFile"
-        type="file"
-        accept="image/*"
-      >
+  <!-- TASK LIST -->
 
+  <div id="taskList">
 
-      <!-- CURRENT IMAGE WHILE EDITING -->
+    <div class="loading">
 
-      <div
-        id="currentImage"
-        class="currentImage">
-      </div>
-
-
-      <!-- =================================
-           NAME
-      ================================= -->
-
-      <input
-        id="name"
-        type="text"
-        placeholder="Name"
-      >
-
-
-      <!-- =================================
-           COMPANY
-      ================================= -->
-
-      <input
-        id="company"
-        type="text"
-        placeholder="Company"
-      >
-
-
-      <!-- =================================
-           DESIGNATION
-      ================================= -->
-
-      <input
-        id="designation"
-        type="text"
-        placeholder="Designation"
-      >
-
-
-      <!-- =================================
-           AREA
-      ================================= -->
-
-      <input
-        id="area"
-        type="text"
-        placeholder="Area"
-      >
-
-
-      <!-- =================================
-           MOBILE
-      ================================= -->
-
-      <input
-        id="mobile"
-        type="text"
-        placeholder="Mobile"
-      >
-
-
-      <!-- =================================
-           EMAIL
-      ================================= -->
-
-      <input
-        id="email"
-        type="email"
-        placeholder="Email"
-      >
-
-
-      <!-- =================================
-           NOTES
-      ================================= -->
-
-      <textarea
-        id="notes"
-        placeholder="Notes">
-      </textarea>
-
-
-      <!-- =================================
-           SAVE / UPDATE
-      ================================= -->
-
-      <button
-        id="saveButton"
-        class="saveButton"
-        onclick="saveCard()">
-
-        Save Card
-
-      </button>
-
+      Loading tasks...
 
     </div>
 
   </div>
 
 
-  <!-- =================================
-       JAVASCRIPT
-  ================================= -->
+</div>
 
-  <?!= include('JavaScript'); ?>
+
+<!-- ADD / EDIT TASK POPUP -->
+
+<div
+  id="taskModal"
+  class="modal">
+
+  <div class="modalContent">
+
+
+    <div class="modalHeader">
+
+      <h2 id="modalTitle">
+
+        Add Task
+
+      </h2>
+
+
+      <button
+        class="closeButton"
+        onclick="closeAddTask()">
+
+        ×
+
+      </button>
+
+    </div>
+
+
+    <label>
+
+      Task
+
+    </label>
+
+
+    <input
+      type="text"
+      id="taskInput"
+      placeholder="Enter task">
+
+
+    <label>
+
+      Due Date
+
+    </label>
+
+
+    <input
+      type="date"
+      id="dueDateInput">
+
+
+    <button
+      id="saveButton"
+      class="saveButton"
+      onclick="saveTask()">
+
+      Save Task
+
+    </button>
+
+
+  </div>
+
+</div>
+
+
+<!-- MESSAGE -->
+
+<div
+  id="message"
+  class="message">
+
+</div>
+
+
+<?!= include('JS'); ?>
 
 
 </body>
