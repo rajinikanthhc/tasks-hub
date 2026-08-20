@@ -28,13 +28,29 @@
 
     <h1>Tasks</h1>
 
-    <button
-      class="addButton"
-      onclick="openAddTask()">
 
-      + Add Task
+    <div class="headerButtons">
 
-    </button>
+      <button
+        class="addButton"
+        onclick="openAddTask()">
+
+        + Add Task
+
+      </button>
+
+
+      <a
+        class="sheetButton"
+        href="YOUR_GOOGLE_SHEET_URL"
+        target="_blank"
+        rel="noopener">
+
+        📊 Sheet
+
+      </a>
+
+    </div>
 
   </div>
 
@@ -50,6 +66,7 @@
       id="searchInput"
       placeholder="Search tasks..."
       oninput="filterTasks()">
+
 
     <button
       id="clearSearch"
@@ -167,6 +184,18 @@
     <input
       type="date"
       id="dueDateInput">
+
+
+    <label>
+
+      Time
+
+    </label>
+
+
+    <input
+      type="time"
+      id="timeInput">
 
 
     <button

@@ -18,7 +18,11 @@ window.onload = function () {
 
 function loadTasks() {
 
-  document.getElementById("taskList").innerHTML =
+  const list =
+    document.getElementById("taskList");
+
+
+  list.innerHTML =
     '<div class="loading">Loading tasks...</div>';
 
 
@@ -108,7 +112,151 @@ function displayTasks() {
     });
 
 
-  if (filtered.length === 0) {
+  /* ================================
+     SORT
+  ================================= */
+
+  filtered.sort(function (a, b) {
+
+
+    const aCompleted =
+      a.status === "Completed";
+
+
+    const bCompleted =
+      b.status === "Completed";
+
+
+    /* COMPLETED ALWAYS LAST */
+
+    if (
+      aCompleted &&
+      !bCompleted
+    ) {
+
+      return 1;
+
+    }
+
+
+    if (
+      !aCompleted &&
+      bCompleted
+    ) {
+
+      return -1;
+
+    }
+
+
+    /* CHECK DATE */
+
+    const aHasDate =
+      a.dueDate &&
+      a.dueDate !== "";
+
+
+    const bHasDate =
+      b.dueDate &&
+      b.dueDate !== "";
+
+
+    /* TASKS WITH DATE FIRST */
+
+    if (
+      aHasDate &&
+      !bHasDate
+    ) {
+
+      return -1;
+
+    }
+
+
+    if (
+      !aHasDate &&
+      bHasDate
+    ) {
+
+      return 1;
+
+    }
+
+
+    /* DATE ORDER */
+
+    if (
+      aHasDate &&
+      bHasDate
+    ) {
+
+      if (
+        a.dueDate !==
+        b.dueDate
+      ) {
+
+        return a.dueDate.localeCompare(
+          b.dueDate
+        );
+
+      }
+
+
+      /* TIME ORDER */
+
+      if (
+        a.time &&
+        b.time &&
+        a.time !== b.time
+      ) {
+
+        return a.time.localeCompare(
+          b.time
+        );
+
+      }
+
+
+      if (
+        a.time &&
+        !b.time
+      ) {
+
+        return -1;
+
+      }
+
+
+      if (
+        !a.time &&
+        b.time
+      ) {
+
+        return 1;
+
+      }
+
+    }
+
+
+    /* A TO Z */
+
+    return a.task
+      .toLowerCase()
+      .localeCompare(
+        b.task.toLowerCase()
+      );
+
+  });
+
+
+  /* ================================
+     EMPTY
+  ================================= */
+
+  if (
+    filtered.length === 0
+  ) {
 
     list.innerHTML =
       '<div class="empty">No tasks found</div>';
@@ -117,6 +265,10 @@ function displayTasks() {
 
   }
 
+
+  /* ================================
+     DISPLAY
+  ================================= */
 
   list.innerHTML =
     filtered
@@ -129,30 +281,46 @@ function displayTasks() {
 
         return `
 
-          <div class="task ${completed ? "completed" : ""}">
+          <div
+            class="task ${
+              completed
+                ? "completed"
+                : ""
+            }">
 
 
-            <!-- COMPLETE -->
+            <!-- COMPLETE BUTTON -->
 
             <button
               class="checkButton"
               onclick="toggleTask(
                 ${task.id},
-                '${completed ? "Pending" : "Completed"}'
+                '${completed
+                  ? "Pending"
+                  : "Completed"}'
               )">
 
-              ${completed ? "✓" : ""}
+              ${
+                completed
+                  ? "✓"
+                  : ""
+              }
 
             </button>
 
 
-            <!-- TASK INFO -->
+            <!-- TASK INFORMATION -->
 
             <div class="taskInfo">
 
+
               <div class="taskName">
 
-                ${escapeHtml(task.task)}
+                ${
+                  escapeHtml(
+                    task.task
+                  )
+                }
 
               </div>
 
@@ -161,21 +329,34 @@ function displayTasks() {
                 task.dueDate
 
                   ? `<div class="dueDate">
-                       Due: ${formatDate(task.dueDate)}
+
+                       Due:
+                       ${formatDate(
+                         task.dueDate
+                       )}
+
+                       ${
+                         task.time
+                           ? " at " +
+                             formatTime(
+                               task.time
+                             )
+                           : ""
+                       }
+
                      </div>`
 
                   : ""
               }
 
+
             </div>
 
 
-            <!-- ACTIONS -->
+            <!-- ACTION BUTTONS -->
 
             <div class="taskActions">
 
-
-              <!-- EDIT -->
 
               <button
                 class="editButton"
@@ -185,8 +366,6 @@ function displayTasks() {
 
               </button>
 
-
-              <!-- DELETE -->
 
               <button
                 class="deleteButton"
@@ -216,28 +395,48 @@ function displayTasks() {
 
 function openAddTask() {
 
-  document.getElementById("taskInput").value = "";
+  document.getElementById(
+    "taskInput"
+  ).value = "";
 
-  document.getElementById("dueDateInput").value = "";
+
+  document.getElementById(
+    "dueDateInput"
+  ).value = "";
 
 
-  document.getElementById("modalTitle").innerText =
+  document.getElementById(
+    "timeInput"
+  ).value = "";
+
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
     "Add Task";
 
 
-  document.getElementById("saveButton").innerText =
+  document.getElementById(
+    "saveButton"
+  ).innerText =
     "Save Task";
 
 
-  document.getElementById("saveButton").disabled =
+  document.getElementById(
+    "saveButton"
+  ).disabled =
     false;
 
 
-  document.getElementById("taskModal").dataset.editId =
+  document.getElementById(
+    "taskModal"
+  ).dataset.editId =
     "";
 
 
-  document.getElementById("taskModal").style.display =
+  document.getElementById(
+    "taskModal"
+  ).style.display =
     "flex";
 
 
@@ -269,38 +468,74 @@ function openEditTask(id) {
 
   if (!task) {
 
-    showMessage("Task not found.");
+    showMessage(
+      "Task not found."
+    );
 
     return;
 
   }
 
 
-  document.getElementById("taskInput").value =
+  /* TASK */
+
+  document.getElementById(
+    "taskInput"
+  ).value =
     task.task;
 
 
-  document.getElementById("dueDateInput").value =
+  /* DATE */
+
+  document.getElementById(
+    "dueDateInput"
+  ).value =
     task.dueDate || "";
 
 
-  document.getElementById("modalTitle").innerText =
+  /* TIME */
+
+  document.getElementById(
+    "timeInput"
+  ).value =
+    task.time || "";
+
+
+  /* TITLE */
+
+  document.getElementById(
+    "modalTitle"
+  ).innerText =
     "Edit Task";
 
 
-  document.getElementById("saveButton").innerText =
+  /* BUTTON */
+
+  document.getElementById(
+    "saveButton"
+  ).innerText =
     "Update Task";
 
 
-  document.getElementById("saveButton").disabled =
+  document.getElementById(
+    "saveButton"
+  ).disabled =
     false;
 
 
-  document.getElementById("taskModal").dataset.editId =
+  /* STORE ID */
+
+  document.getElementById(
+    "taskModal"
+  ).dataset.editId =
     task.id;
 
 
-  document.getElementById("taskModal").style.display =
+  /* OPEN MODAL */
+
+  document.getElementById(
+    "taskModal"
+  ).style.display =
     "flex";
 
 
@@ -321,7 +556,9 @@ function openEditTask(id) {
 
 function closeAddTask() {
 
-  document.getElementById("taskModal").style.display =
+  document.getElementById(
+    "taskModal"
+  ).style.display =
     "none";
 
 }
@@ -346,8 +583,16 @@ function saveTask() {
       .value;
 
 
+  const time =
+    document
+      .getElementById("timeInput")
+      .value;
+
+
   const modal =
-    document.getElementById("taskModal");
+    document.getElementById(
+      "taskModal"
+    );
 
 
   const editId =
@@ -356,7 +601,9 @@ function saveTask() {
 
   if (!task) {
 
-    showMessage("Please enter a task.");
+    showMessage(
+      "Please enter a task."
+    );
 
     return;
 
@@ -364,54 +611,161 @@ function saveTask() {
 
 
   const button =
-    document.getElementById("saveButton");
-
-
-  button.disabled = true;
+    document.getElementById(
+      "saveButton"
+    );
 
 
   /* ================================
-     UPDATE EXISTING TASK
+     EDIT TASK
   ================================= */
 
   if (editId) {
 
-    button.innerText =
-      "Updating...";
+    const taskIndex =
+      tasks.findIndex(
+        function (item) {
 
+          return String(item.id) ===
+            String(editId);
+
+        }
+      );
+
+
+    if (taskIndex === -1) {
+
+      showMessage(
+        "Task not found."
+      );
+
+      return;
+
+    }
+
+
+    /* SAVE OLD TASK */
+
+    const oldTask =
+      Object.assign(
+        {},
+        tasks[taskIndex]
+      );
+
+
+    /* ================================
+       UPDATE SCREEN IMMEDIATELY
+    ================================= */
+
+    tasks[taskIndex] = {
+
+      id: oldTask.id,
+
+      task: task,
+
+      dueDate: dueDate,
+
+      time: time,
+
+      status:
+        oldTask.status ||
+        "Pending",
+
+      reminderSent: false
+
+    };
+
+
+    /* CLOSE POPUP */
+
+    closeAddTask();
+
+
+    /* UPDATE LIST */
+
+    displayTasks();
+
+
+    showMessage(
+      "Task updated"
+    );
+
+
+    /* ================================
+       SAVE TO SHEET IN BACKGROUND
+    ================================= */
 
     google.script.run
 
-      .withSuccessHandler(function () {
+      .withSuccessHandler(
+        function (updatedTask) {
 
-        button.disabled = false;
+          const index =
+            tasks.findIndex(
+              function (item) {
 
-        button.innerText =
-          "Update Task";
+                return String(
+                  item.id
+                ) ===
+                String(editId);
 
-        closeAddTask();
+              }
+            );
 
-        showMessage("Task updated");
 
-        loadTasks();
+          if (index !== -1) {
 
-      })
+            tasks[index] =
+              updatedTask;
 
-      .withFailureHandler(function (error) {
+            displayTasks();
 
-        button.disabled = false;
+          }
 
-        button.innerText =
-          "Update Task";
+        }
+      )
 
-        showMessage(error.message);
+      .withFailureHandler(
+        function (error) {
 
-      })
+          /* RESTORE OLD TASK */
+
+          const index =
+            tasks.findIndex(
+              function (item) {
+
+                return String(
+                  item.id
+                ) ===
+                String(editId);
+
+              }
+            );
+
+
+          if (index !== -1) {
+
+            tasks[index] =
+              oldTask;
+
+            displayTasks();
+
+          }
+
+
+          showMessage(
+            "Update failed: " +
+            error.message
+          );
+
+        }
+      )
 
       .updateTask(
         editId,
         task,
-        dueDate
+        dueDate,
+        time
       );
 
 
@@ -421,8 +775,12 @@ function saveTask() {
 
 
   /* ================================
-     ADD NEW TASK
+     ADD TASK
   ================================= */
+
+  button.disabled =
+    true;
+
 
   button.innerText =
     "Saving...";
@@ -430,35 +788,57 @@ function saveTask() {
 
   google.script.run
 
-    .withSuccessHandler(function () {
+    .withSuccessHandler(
+      function (newTask) {
 
-      button.disabled = false;
+        tasks.push(
+          newTask
+        );
 
-      button.innerText =
-        "Save Task";
 
-      closeAddTask();
+        closeAddTask();
 
-      showMessage("Task added");
 
-      loadTasks();
+        button.disabled =
+          false;
 
-    })
 
-    .withFailureHandler(function (error) {
+        button.innerText =
+          "Save Task";
 
-      button.disabled = false;
 
-      button.innerText =
-        "Save Task";
+        displayTasks();
 
-      showMessage(error.message);
 
-    })
+        showMessage(
+          "Task added"
+        );
+
+      }
+    )
+
+    .withFailureHandler(
+      function (error) {
+
+        button.disabled =
+          false;
+
+
+        button.innerText =
+          "Save Task";
+
+
+        showMessage(
+          error.message
+        );
+
+      }
+    )
 
     .addTask(
       task,
-      dueDate
+      dueDate,
+      time
     );
 
 }
@@ -468,21 +848,78 @@ function saveTask() {
    COMPLETE / UNCOMPLETE
 ================================ */
 
-function toggleTask(id, status) {
+function toggleTask(
+  id,
+  status
+) {
+
+  const task =
+    tasks.find(
+      function (item) {
+
+        return String(
+          item.id
+        ) ===
+        String(id);
+
+      }
+    );
+
+
+  if (!task) {
+
+    return;
+
+  }
+
+
+  const oldStatus =
+    task.status;
+
+
+  /* UPDATE IMMEDIATELY */
+
+  task.status =
+    status;
+
+
+  displayTasks();
+
+
+  /* SAVE IN BACKGROUND */
 
   google.script.run
 
-    .withSuccessHandler(function () {
+    .withSuccessHandler(
+      function () {
 
-      loadTasks();
+        showMessage(
+          status === "Completed"
+            ? "Task completed"
+            : "Task reopened"
+        );
 
-    })
+      }
+    )
 
-    .withFailureHandler(function (error) {
+    .withFailureHandler(
+      function (error) {
 
-      showMessage(error.message);
+        /* RESTORE */
 
-    })
+        task.status =
+          oldStatus;
+
+
+        displayTasks();
+
+
+        showMessage(
+          error.message
+        );
+
+      }
+    )
 
     .toggleTask(
       id,
@@ -499,7 +936,9 @@ function toggleTask(id, status) {
 function deleteTask(id) {
 
   if (
-    !confirm("Delete this task?")
+    !confirm(
+      "Delete this task?"
+    )
   ) {
 
     return;
@@ -507,21 +946,78 @@ function deleteTask(id) {
   }
 
 
+  const index =
+    tasks.findIndex(
+      function (item) {
+
+        return String(
+          item.id
+        ) ===
+        String(id);
+
+      }
+    );
+
+
+  if (
+    index === -1
+  ) {
+
+    return;
+
+  }
+
+
+  const deletedTask =
+    tasks[index];
+
+
+  /* REMOVE IMMEDIATELY */
+
+  tasks.splice(
+    index,
+    1
+  );
+
+
+  displayTasks();
+
+
+  /* DELETE IN BACKGROUND */
+
   google.script.run
 
-    .withSuccessHandler(function () {
+    .withSuccessHandler(
+      function () {
 
-      showMessage("Task deleted");
+        showMessage(
+          "Task deleted"
+        );
 
-      loadTasks();
+      }
+    )
 
-    })
+    .withFailureHandler(
+      function (error) {
 
-    .withFailureHandler(function (error) {
+        /* RESTORE */
 
-      showMessage(error.message);
+        tasks.splice(
+          index,
+          0,
+          deletedTask
+        );
 
-    })
+
+        displayTasks();
+
+
+        showMessage(
+          error.message
+        );
+
+      }
+    )
 
     .deleteTask(id);
 
@@ -532,46 +1028,70 @@ function deleteTask(id) {
    FILTER
 ================================ */
 
-function setFilter(filter) {
+function setFilter(
+  filter
+) {
 
   currentFilter =
     filter;
 
 
   document
-    .querySelectorAll(".filterButton")
-    .forEach(function (button) {
+    .querySelectorAll(
+      ".filterButton"
+    )
+    .forEach(
+      function (button) {
 
-      button.classList.remove(
+        button.classList.remove(
+          "active"
+        );
+
+      }
+    );
+
+
+  if (
+    filter === "all"
+  ) {
+
+    document
+      .getElementById(
+        "allButton"
+      )
+      .classList.add(
         "active"
       );
 
-    });
+  }
 
 
-  if (filter === "all") {
+  if (
+    filter === "pending"
+  ) {
 
     document
-      .getElementById("allButton")
-      .classList.add("active");
+      .getElementById(
+        "pendingButton"
+      )
+      .classList.add(
+        "active"
+      );
 
   }
 
 
-  if (filter === "pending") {
+  if (
+    filter === "completed"
+  ) {
 
     document
-      .getElementById("pendingButton")
-      .classList.add("active");
-
-  }
-
-
-  if (filter === "completed") {
-
-    document
-      .getElementById("completedButton")
-      .classList.add("active");
+      .getElementById(
+        "completedButton"
+      )
+      .classList.add(
+        "active"
+      );
 
   }
 
@@ -589,12 +1109,16 @@ function filterTasks() {
 
   const value =
     document
-      .getElementById("searchInput")
+      .getElementById(
+        "searchInput"
+      )
       .value;
 
 
   document
-    .getElementById("clearSearch")
+    .getElementById(
+      "clearSearch"
+    )
     .style.display =
       value
         ? "block"
@@ -613,12 +1137,16 @@ function filterTasks() {
 function clearSearch() {
 
   document
-    .getElementById("searchInput")
+    .getElementById(
+      "searchInput"
+    )
     .value = "";
 
 
   document
-    .getElementById("clearSearch")
+    .getElementById(
+      "clearSearch"
+    )
     .style.display =
       "none";
 
@@ -632,7 +1160,9 @@ function clearSearch() {
    FORMAT DATE
 ================================ */
 
-function formatDate(dateString) {
+function formatDate(
+  dateString
+) {
 
   const parts =
     dateString.split("-");
@@ -661,13 +1191,78 @@ function formatDate(dateString) {
 
 
 /* ================================
+   FORMAT TIME
+================================ */
+
+function formatTime(
+  timeString
+) {
+
+  if (!timeString) {
+
+    return "";
+
+  }
+
+
+  const parts =
+    timeString.split(":");
+
+
+  if (
+    parts.length < 2
+  ) {
+
+    return timeString;
+
+  }
+
+
+  let hour =
+    parseInt(
+      parts[0],
+      10
+    );
+
+
+  const minute =
+    parts[1];
+
+
+  const ampm =
+    hour >= 12
+      ? "PM"
+      : "AM";
+
+
+  hour =
+    hour % 12 ||
+    12;
+
+
+  return (
+    hour +
+    ":" +
+    minute +
+    " " +
+    ampm
+  );
+
+}
+
+
+/* ================================
    ESCAPE HTML
 ================================ */
 
-function escapeHtml(text) {
+function escapeHtml(
+  text
+) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   div.textContent =
@@ -680,13 +1275,17 @@ function escapeHtml(text) {
 
 
 /* ================================
-   SHOW MESSAGE
+   MESSAGE
 ================================ */
 
-function showMessage(text) {
+function showMessage(
+  text
+) {
 
   const message =
-    document.getElementById("message");
+    document.getElementById(
+      "message"
+    );
 
 
   message.innerText =
@@ -697,18 +1296,21 @@ function showMessage(text) {
     "block";
 
 
-  setTimeout(function () {
+  setTimeout(
+    function () {
 
-    message.style.display =
-      "none";
+      message.style.display =
+        "none";
 
-  }, 2500);
+    },
+    2500
+  );
 
 }
 
 
 /* ================================
-   CLOSE MODAL BY CLICKING OUTSIDE
+   CLOSE MODAL OUTSIDE
 ================================ */
 
 document.addEventListener(
@@ -716,7 +1318,9 @@ document.addEventListener(
   function (event) {
 
     const modal =
-      document.getElementById("taskModal");
+      document.getElementById(
+        "taskModal"
+      );
 
 
     if (
