@@ -50,23 +50,25 @@ function getTasks() {
       .getSheetByName(SHEET_NAME);
 
   if (!sheet) {
-
     throw new Error("Tasks sheet not found.");
-
   }
 
   const lastRow =
     sheet.getLastRow();
 
   if (lastRow < 2) {
-
     return [];
+  }
 
+  /* Make sure Repeat column exists */
+
+  if (!sheet.getRange(1, 7).getValue()) {
+    sheet.getRange(1, 7).setValue("Repeat");
   }
 
   const data =
     sheet
-      .getRange(2, 1, lastRow - 1, 6)
+      .getRange(2, 1, lastRow - 1, 7)
       .getValues();
 
   return data
@@ -114,7 +116,11 @@ function getTasks() {
 
         reminderSent:
           row[5] === true ||
-          row[5] === "TRUE"
+          row[5] === "TRUE",
+
+        repeat:
+          row[6] ||
+          "Does not repeat"
 
       };
 
@@ -130,7 +136,8 @@ function getTasks() {
 function addTask(
   task,
   dueDate,
-  time
+  time,
+  repeat
 ) {
 
   const sheet =
@@ -139,9 +146,7 @@ function addTask(
       .getSheetByName(SHEET_NAME);
 
   if (!sheet) {
-
     throw new Error("Tasks sheet not found.");
-
   }
 
   if (
@@ -202,6 +207,11 @@ function addTask(
 
   }
 
+  const repeatValue =
+    repeat ||
+    "Does not repeat";
+
+
   sheet.appendRow([
 
     newId,
@@ -216,9 +226,12 @@ function addTask(
 
     "Pending",
 
-    false
+    false,
+
+    repeatValue
 
   ]);
+
 
   return {
 
@@ -232,7 +245,9 @@ function addTask(
 
     status: "Pending",
 
-    reminderSent: false
+    reminderSent: false,
+
+    repeat: repeatValue
 
   };
 
@@ -243,7 +258,13 @@ function addTask(
    UPDATE TASK
 ================================ */
 
-function updateTask(id, task, dueDate, time) {
+function updateTask(
+  id,
+  task,
+  dueDate,
+  time,
+  repeat
+) {
 
   const sheet =
     SpreadsheetApp
@@ -258,7 +279,8 @@ function updateTask(id, task, dueDate, time) {
     throw new Error("Please enter a task.");
   }
 
-  const lastRow = sheet.getLastRow();
+  const lastRow =
+    sheet.getLastRow();
 
   if (lastRow < 2) {
     return false;
@@ -266,19 +288,30 @@ function updateTask(id, task, dueDate, time) {
 
   const ids =
     sheet
-      .getRange(2, 1, lastRow - 1, 1)
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
       .getValues();
 
   let rowNumber = -1;
 
-  for (let i = 0; i < ids.length; i++) {
+  for (
+    let i = 0;
+    i < ids.length;
+    i++
+  ) {
 
     if (
       String(ids[i][0]) ===
       String(id)
     ) {
 
-      rowNumber = i + 2;
+      rowNumber =
+        i + 2;
+
       break;
 
     }
@@ -289,10 +322,6 @@ function updateTask(id, task, dueDate, time) {
     return false;
   }
 
-
-  /* ================================
-     PREPARE TIME
-  ================================= */
 
   let timeValue = "";
 
@@ -308,31 +337,47 @@ function updateTask(id, task, dueDate, time) {
   }
 
 
-  /* ================================
-     READ CURRENT STATUS
-  ================================= */
-
   const status =
     sheet
-      .getRange(rowNumber, 5)
+      .getRange(
+        rowNumber,
+        5
+      )
       .getValue() ||
       "Pending";
 
 
-  /* ================================
-     UPDATE B:F IN ONE OPERATION
-  ================================= */
+  const repeatValue =
+    repeat ||
+    "Does not repeat";
+
+
+  /*
+     Update B:G together
+  */
 
   sheet
-    .getRange(rowNumber, 2, 1, 5)
+    .getRange(
+      rowNumber,
+      2,
+      1,
+      6
+    )
     .setValues([[
       task.trim(),
+
       dueDate
         ? new Date(dueDate)
         : "",
+
       timeValue,
+
       status,
-      false
+
+      false,
+
+      repeatValue
+
     ]]);
 
 
@@ -348,9 +393,58 @@ function updateTask(id, task, dueDate, time) {
 
     status: status,
 
-    reminderSent: false
+    reminderSent: false,
+
+    repeat: repeatValue
 
   };
+
+}
+
+
+/* ================================
+   NEXT REPEAT DATE
+================================ */
+
+function getNextRepeatDate(
+  currentDate,
+  repeat
+) {
+
+  const nextDate =
+    new Date(currentDate);
+
+  if (
+    repeat === "Daily"
+  ) {
+
+    nextDate.setDate(
+      nextDate.getDate() + 1
+    );
+
+  }
+
+  else if (
+    repeat === "Weekly"
+  ) {
+
+    nextDate.setDate(
+      nextDate.getDate() + 7
+    );
+
+  }
+
+  else if (
+    repeat === "Monthly"
+  ) {
+
+    nextDate.setMonth(
+      nextDate.getMonth() + 1
+    );
+
+  }
+
+  return nextDate;
 
 }
 
@@ -381,37 +475,125 @@ function toggleTask(
     sheet.getLastRow();
 
   if (lastRow < 2) {
-
     return false;
-
   }
 
-  const ids =
+  const data =
     sheet
       .getRange(
         2,
         1,
         lastRow - 1,
-        1
+        7
       )
       .getValues();
 
+
   for (
     let i = 0;
-    i < ids.length;
+    i < data.length;
     i++
   ) {
 
     if (
-      String(ids[i][0]) ===
+      String(data[i][0]) ===
       String(id)
     ) {
 
+      const rowNumber =
+        i + 2;
+
+      const repeat =
+        data[i][6] ||
+        "Does not repeat";
+
+
+      /*
+         RECURRING TASK
+      */
+
+      if (
+        status === "Completed" &&
+        repeat !== "Does not repeat"
+      ) {
+
+        const currentDate =
+          data[i][2];
+
+        if (
+          currentDate instanceof Date
+        ) {
+
+          const nextDate =
+            getNextRepeatDate(
+              currentDate,
+              repeat
+            );
+
+          sheet
+            .getRange(
+              rowNumber,
+              3
+            )
+            .setValue(nextDate);
+
+        }
+
+
+        /*
+           Keep it pending for next occurrence
+        */
+
+        sheet
+          .getRange(
+            rowNumber,
+            5
+          )
+          .setValue("Pending");
+
+
+        /*
+           Reset reminder
+        */
+
+        sheet
+          .getRange(
+            rowNumber,
+            6
+          )
+          .setValue(false);
+
+
+        return {
+
+          recurring: true,
+
+          status: "Pending"
+
+        };
+
+      }
+
+
+      /*
+         NORMAL TASK
+      */
+
       sheet
-        .getRange(i + 2, 5)
+        .getRange(
+          rowNumber,
+          5
+        )
         .setValue(status);
 
-      return true;
+
+      return {
+
+        recurring: false,
+
+        status: status
+
+      };
 
     }
 
@@ -445,9 +627,7 @@ function deleteTask(id) {
     sheet.getLastRow();
 
   if (lastRow < 2) {
-
     return false;
-
   }
 
   const ids =
@@ -498,18 +678,14 @@ function sendTaskReminders() {
       .getSheetByName(SHEET_NAME);
 
   if (!sheet) {
-
     return;
-
   }
 
   const lastRow =
     sheet.getLastRow();
 
   if (lastRow < 2) {
-
     return;
-
   }
 
   const data =
@@ -518,12 +694,13 @@ function sendTaskReminders() {
         2,
         1,
         lastRow - 1,
-        6
+        7
       )
       .getValues();
 
   const now =
     new Date();
+
 
   data.forEach(
     function (row, index) {
@@ -543,11 +720,15 @@ function sendTaskReminders() {
       const reminderSent =
         row[5];
 
+      const repeat =
+        row[6] ||
+        "Does not repeat";
+
+
       if (!task) {
-
         return;
-
       }
+
 
       if (
         String(status)
@@ -559,6 +740,7 @@ function sendTaskReminders() {
 
       }
 
+
       if (
         reminderSent === true ||
         reminderSent === "TRUE"
@@ -568,6 +750,7 @@ function sendTaskReminders() {
 
       }
 
+
       if (
         !(dueDate instanceof Date) ||
         !(time instanceof Date)
@@ -576,6 +759,7 @@ function sendTaskReminders() {
         return;
 
       }
+
 
       const taskDateTime =
         new Date(dueDate);
@@ -587,6 +771,7 @@ function sendTaskReminders() {
         0
       );
 
+
       if (
         now < taskDateTime
       ) {
@@ -594,6 +779,11 @@ function sendTaskReminders() {
         return;
 
       }
+
+
+      /*
+         SEND EMAIL
+      */
 
       MailApp.sendEmail({
 
@@ -616,18 +806,64 @@ function sendTaskReminders() {
           Utilities.formatDate(
             taskDateTime,
             Session.getScriptTimeZone(),
-            "dd-MM-yyyy HH:mm"
+            "dd-MM-yyyy hh:mm a"
           ) +
           "</p>"
 
       });
 
-      sheet
-        .getRange(
-          index + 2,
-          6
-        )
-        .setValue(true);
+
+      /*
+         RECURRING TASK
+      */
+
+      if (
+        repeat !==
+        "Does not repeat"
+      ) {
+
+        const nextDate =
+          getNextRepeatDate(
+            dueDate,
+            repeat
+          );
+
+
+        sheet
+          .getRange(
+            index + 2,
+            3
+          )
+          .setValue(nextDate);
+
+
+        /*
+           Reset reminder
+        */
+
+        sheet
+          .getRange(
+            index + 2,
+            6
+          )
+          .setValue(false);
+
+      }
+
+      else {
+
+        /*
+           Normal task
+        */
+
+        sheet
+          .getRange(
+            index + 2,
+            6
+          )
+          .setValue(true);
+
+      }
 
     }
   );
@@ -698,6 +934,7 @@ function setupReminderTrigger() {
     }
   );
 
+
   ScriptApp
     .newTrigger(
       "sendTaskReminders"
@@ -721,6 +958,7 @@ function getSheetUrl() {
 
 }
 
+
 /* ================================
    TEST EMAIL
 ================================ */
@@ -731,7 +969,8 @@ function testTaskEmail() {
 
     to: REMINDER_EMAIL,
 
-    subject: "Tasks Hub - Test Email",
+    subject:
+      "Tasks Hub - Test Email",
 
     body:
       "This is a test email from your Tasks Hub."

@@ -42,7 +42,7 @@
 
       <a
         class="sheetButton"
-        href="YOUR_GOOGLE_SHEET_URL"
+        href="<?!= getSheetUrl() ?>"
         target="_blank"
         rel="noopener">
 
@@ -60,6 +60,7 @@
   <div class="searchBox">
 
     <span>🔍</span>
+
 
     <input
       type="text"
@@ -162,9 +163,7 @@
 
 
     <label>
-
       Task
-
     </label>
 
 
@@ -175,9 +174,7 @@
 
 
     <label>
-
       Due Date
-
     </label>
 
 
@@ -187,15 +184,40 @@
 
 
     <label>
-
       Time
-
     </label>
 
 
     <input
       type="time"
       id="timeInput">
+
+
+    <label>
+      Repeat
+    </label>
+
+
+    <select
+      id="repeatInput">
+
+      <option value="Does not repeat">
+        Does not repeat
+      </option>
+
+      <option value="Daily">
+        Daily
+      </option>
+
+      <option value="Weekly">
+        Weekly
+      </option>
+
+      <option value="Monthly">
+        Monthly
+      </option>
+
+    </select>
 
 
     <button
@@ -223,7 +245,6 @@
 
 
 <?!= include('JS'); ?>
-
 
 </body>
 

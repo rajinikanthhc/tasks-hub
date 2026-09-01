@@ -21,10 +21,8 @@ function loadTasks() {
   const list =
     document.getElementById("taskList");
 
-
   list.innerHTML =
     '<div class="loading">Loading tasks...</div>';
-
 
   google.script.run
 
@@ -69,8 +67,6 @@ function displayTasks() {
     tasks.filter(function (task) {
 
 
-      /* SEARCH */
-
       if (
         search &&
         !task.task
@@ -83,8 +79,6 @@ function displayTasks() {
       }
 
 
-      /* PENDING */
-
       if (
         currentFilter === "pending" &&
         task.status === "Completed"
@@ -94,8 +88,6 @@ function displayTasks() {
 
       }
 
-
-      /* COMPLETED */
 
       if (
         currentFilter === "completed" &&
@@ -127,8 +119,6 @@ function displayTasks() {
       b.status === "Completed";
 
 
-    /* COMPLETED ALWAYS LAST */
-
     if (
       aCompleted &&
       !bCompleted
@@ -149,8 +139,6 @@ function displayTasks() {
     }
 
 
-    /* CHECK DATE */
-
     const aHasDate =
       a.dueDate &&
       a.dueDate !== "";
@@ -160,8 +148,6 @@ function displayTasks() {
       b.dueDate &&
       b.dueDate !== "";
 
-
-    /* TASKS WITH DATE FIRST */
 
     if (
       aHasDate &&
@@ -183,8 +169,6 @@ function displayTasks() {
     }
 
 
-    /* DATE ORDER */
-
     if (
       aHasDate &&
       bHasDate
@@ -201,8 +185,6 @@ function displayTasks() {
 
       }
 
-
-      /* TIME ORDER */
 
       if (
         a.time &&
@@ -239,8 +221,6 @@ function displayTasks() {
     }
 
 
-    /* A TO Z */
-
     return a.task
       .toLowerCase()
       .localeCompare(
@@ -249,10 +229,6 @@ function displayTasks() {
 
   });
 
-
-  /* ================================
-     EMPTY
-  ================================= */
 
   if (
     filtered.length === 0
@@ -266,10 +242,6 @@ function displayTasks() {
   }
 
 
-  /* ================================
-     DISPLAY
-  ================================= */
-
   list.innerHTML =
     filtered
       .map(function (task) {
@@ -281,15 +253,12 @@ function displayTasks() {
 
         return `
 
-          <div
-            class="task ${
-              completed
-                ? "completed"
-                : ""
-            }">
+          <div class="task ${
+            completed
+              ? "completed"
+              : ""
+          }">
 
-
-            <!-- COMPLETE BUTTON -->
 
             <button
               class="checkButton"
@@ -308,8 +277,6 @@ function displayTasks() {
 
             </button>
 
-
-            <!-- TASK INFORMATION -->
 
             <div class="taskInfo">
 
@@ -344,6 +311,17 @@ function displayTasks() {
                            : ""
                        }
 
+                       ${
+                         task.repeat &&
+                         task.repeat !==
+                         "Does not repeat"
+                           ? " • " +
+                             escapeHtml(
+                               task.repeat
+                             )
+                           : ""
+                       }
+
                      </div>`
 
                   : ""
@@ -352,8 +330,6 @@ function displayTasks() {
 
             </div>
 
-
-            <!-- ACTION BUTTONS -->
 
             <div class="taskActions">
 
@@ -408,6 +384,12 @@ function openAddTask() {
   document.getElementById(
     "timeInput"
   ).value = "";
+
+
+  document.getElementById(
+    "repeatInput"
+  ).value =
+    "Does not repeat";
 
 
   document.getElementById(
@@ -477,15 +459,11 @@ function openEditTask(id) {
   }
 
 
-  /* TASK */
-
   document.getElementById(
     "taskInput"
   ).value =
     task.task;
 
-
-  /* DATE */
 
   document.getElementById(
     "dueDateInput"
@@ -493,23 +471,24 @@ function openEditTask(id) {
     task.dueDate || "";
 
 
-  /* TIME */
-
   document.getElementById(
     "timeInput"
   ).value =
     task.time || "";
 
 
-  /* TITLE */
+  document.getElementById(
+    "repeatInput"
+  ).value =
+    task.repeat ||
+    "Does not repeat";
+
 
   document.getElementById(
     "modalTitle"
   ).innerText =
     "Edit Task";
 
-
-  /* BUTTON */
 
   document.getElementById(
     "saveButton"
@@ -523,15 +502,11 @@ function openEditTask(id) {
     false;
 
 
-  /* STORE ID */
-
   document.getElementById(
     "taskModal"
   ).dataset.editId =
     task.id;
 
-
-  /* OPEN MODAL */
 
   document.getElementById(
     "taskModal"
@@ -551,7 +526,7 @@ function openEditTask(id) {
 
 
 /* ================================
-   CLOSE ADD / EDIT
+   CLOSE MODAL
 ================================ */
 
 function closeAddTask() {
@@ -589,6 +564,12 @@ function saveTask() {
       .value;
 
 
+  const repeat =
+    document
+      .getElementById("repeatInput")
+      .value;
+
+
   const modal =
     document.getElementById(
       "taskModal"
@@ -617,7 +598,7 @@ function saveTask() {
 
 
   /* ================================
-     EDIT TASK
+     EDIT
   ================================= */
 
   if (editId) {
@@ -644,8 +625,6 @@ function saveTask() {
     }
 
 
-    /* SAVE OLD TASK */
-
     const oldTask =
       Object.assign(
         {},
@@ -653,9 +632,9 @@ function saveTask() {
       );
 
 
-    /* ================================
+    /*
        UPDATE SCREEN IMMEDIATELY
-    ================================= */
+    */
 
     tasks[taskIndex] = {
 
@@ -671,29 +650,25 @@ function saveTask() {
         oldTask.status ||
         "Pending",
 
-      reminderSent: false
+      reminderSent: false,
+
+      repeat: repeat
 
     };
 
 
-    /* CLOSE POPUP */
-
     closeAddTask();
 
-
-    /* UPDATE LIST */
-
     displayTasks();
-
 
     showMessage(
       "Task updated"
     );
 
 
-    /* ================================
-       SAVE TO SHEET IN BACKGROUND
-    ================================= */
+    /*
+       SAVE IN BACKGROUND
+    */
 
     google.script.run
 
@@ -727,8 +702,6 @@ function saveTask() {
 
       .withFailureHandler(
         function (error) {
-
-          /* RESTORE OLD TASK */
 
           const index =
             tasks.findIndex(
@@ -765,7 +738,8 @@ function saveTask() {
         editId,
         task,
         dueDate,
-        time
+        time,
+        repeat
       );
 
 
@@ -775,7 +749,7 @@ function saveTask() {
 
 
   /* ================================
-     ADD TASK
+     ADD
   ================================= */
 
   button.disabled =
@@ -838,7 +812,8 @@ function saveTask() {
     .addTask(
       task,
       dueDate,
-      time
+      time,
+      repeat
     );
 
 }
@@ -867,17 +842,84 @@ function toggleTask(
 
 
   if (!task) {
+    return;
+  }
+
+
+  const oldTask =
+    Object.assign(
+      {},
+      task
+    );
+
+
+  /*
+     RECURRING TASK
+  */
+
+  if (
+    status === "Completed" &&
+    task.repeat &&
+    task.repeat !==
+    "Does not repeat"
+  ) {
+
+    showMessage(
+      "Completing..."
+    );
+
+
+    google.script.run
+
+      .withSuccessHandler(
+        function (result) {
+
+          if (
+            result &&
+            result.recurring
+          ) {
+
+            loadTasks();
+
+            showMessage(
+              "Completed — next occurrence scheduled"
+            );
+
+          }
+
+          else {
+
+            loadTasks();
+
+          }
+
+        }
+      )
+
+      .withFailureHandler(
+        function (error) {
+
+          showMessage(
+            error.message
+          );
+
+        }
+      )
+
+      .toggleTask(
+        id,
+        status
+      );
+
 
     return;
 
   }
 
 
-  const oldStatus =
-    task.status;
-
-
-  /* UPDATE IMMEDIATELY */
+  /*
+     NORMAL TASK
+  */
 
   task.status =
     status;
@@ -885,8 +927,6 @@ function toggleTask(
 
   displayTasks();
 
-
-  /* SAVE IN BACKGROUND */
 
   google.script.run
 
@@ -905,14 +945,10 @@ function toggleTask(
     .withFailureHandler(
       function (error) {
 
-        /* RESTORE */
-
         task.status =
-          oldStatus;
-
+          oldTask.status;
 
         displayTasks();
-
 
         showMessage(
           error.message
@@ -972,8 +1008,6 @@ function deleteTask(id) {
     tasks[index];
 
 
-  /* REMOVE IMMEDIATELY */
-
   tasks.splice(
     index,
     1
@@ -982,8 +1016,6 @@ function deleteTask(id) {
 
   displayTasks();
 
-
-  /* DELETE IN BACKGROUND */
 
   google.script.run
 
@@ -999,8 +1031,6 @@ function deleteTask(id) {
 
     .withFailureHandler(
       function (error) {
-
-        /* RESTORE */
 
         tasks.splice(
           index,
@@ -1199,9 +1229,7 @@ function formatTime(
 ) {
 
   if (!timeString) {
-
     return "";
-
   }
 
 
